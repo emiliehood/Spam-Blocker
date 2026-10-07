@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
+import { useInstallPrompt, isIOS, isSamsungInternet } from '../services/installPrompt';
 import { 
   X, 
   Smartphone, 
@@ -15,12 +16,16 @@ interface InstallModalProps {
 
 export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) => {
   const [copied, setCopied] = useState(false);
+  const { canInstall, isMobile, promptInstall } = useInstallPrompt();
+  const onIOS = isIOS();
+  const onSamsung = isSamsungInternet();
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   // Permanent public URL (GitHub Pages).
   const activeUrl = 'https://emiliehood.github.io/Spam-Blocker/';
 
   useEffect(() => {
+    if (isMobile) return; // QR is only useful on a laptop/desktop
     QRCode.toDataURL(activeUrl, {
       width: 240,
       margin: 2,
@@ -31,7 +36,7 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
     })
       .then(url => setQrDataUrl(url))
       .catch(err => console.error('Failed to generate QR code:', err));
-  }, [activeUrl]);
+  }, [activeUrl, isMobile]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -50,10 +55,12 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
           <div className="space-y-0.5">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <Smartphone className="w-5 h-5 text-cyan-400" />
-              Install ShieldS26 to Your Samsung Phone
+              {isMobile ? 'Install ShieldS26' : 'Install ShieldS26 to Your Phone'}
             </h3>
             <p className="text-xs text-slate-300">
-              Open the link below on your phone, then install it as a standalone app.
+              {isMobile
+                ? 'Add ShieldS26 to your home screen so it opens like a regular app.'
+                : 'Scan the code or open the link on your phone, then install it from there.'}
             </p>
           </div>
           <button
@@ -64,6 +71,16 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
           </button>
         </div>
 
+        {isMobile && canInstall && (
+          <button
+            onClick={async () => { if (await promptInstall()) onClose(); }}
+            className="w-full py-3 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-sm transition-colors"
+          >
+            Install now
+          </button>
+        )}
+
+        {!isMobile && (<>
         {/* QR Code Scan Option */}
         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4">
           {/* QR Canvas */}
@@ -110,12 +127,17 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
           </div>
         </div>
 
+        </>)}
+
         {/* Step-by-Step Install in Samsung Phone */}
         <div className="space-y-2 pt-1 border-t border-slate-800 text-xs">
           <label className="font-bold text-white block">
-            After the page opens on your Samsung phone:
+            {isMobile
+              ? (canInstall ? 'Or install from the browser menu:' : 'Install from your browser menu:')
+              : 'After the page opens on your phone:'}
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className={`grid grid-cols-1 gap-2 ${isMobile ? '' : 'sm:grid-cols-2'}`}>
+            {(!isMobile || onSamsung) && (
             <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
               <span className="font-bold text-cyan-300 block">Samsung Internet</span>
               <ol className="list-decimal list-inside space-y-0.5 text-slate-300">
@@ -124,6 +146,8 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
                 <li>Select <strong>App screen</strong>.</li>
               </ol>
             </div>
+            )}
+            {(!isMobile || (!onSamsung && !onIOS)) && (
             <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
               <span className="font-bold text-cyan-300 block">Google Chrome</span>
               <ol className="list-decimal list-inside space-y-0.5 text-slate-300">
@@ -132,6 +156,17 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
                 <li>Tap <strong>Install</strong> to confirm.</li>
               </ol>
             </div>
+            )}
+            {isMobile && onIOS && (
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+              <span className="font-bold text-cyan-300 block">Safari (iPhone)</span>
+              <ol className="list-decimal list-inside space-y-0.5 text-slate-300">
+                <li>Tap the <strong>Share</strong> button.</li>
+                <li>Tap <strong>Add to Home Screen</strong>.</li>
+                <li>Tap <strong>Add</strong>.</li>
+              </ol>
+            </div>
+            )}
           </div>
         </div>
 

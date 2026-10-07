@@ -1,5 +1,6 @@
 import React from 'react';
 import { Smartphone, LayoutDashboard, PlayCircle, ShieldCheck } from 'lucide-react';
+import { useInstallPrompt } from '../services/installPrompt';
 
 interface HeaderProps {
   currentTab: 'blocked' | 'keywords' | 'reports' | 'shield';
@@ -21,6 +22,17 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenInstallModal,
   totalBlockedCount,
 }) => {
+  const { canInstall, installed, promptInstall } = useInstallPrompt();
+
+  // Use the browser's native install dialog when available; otherwise show instructions.
+  const handleInstallClick = async () => {
+    if (canInstall) {
+      await promptInstall();
+    } else {
+      onOpenInstallModal();
+    }
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full bg-slate-950/95 backdrop-blur-md border-b border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -141,9 +153,10 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Install to Phone Button */}
+          {/* Install to Phone Button (hidden once running as the installed app) */}
+          {!installed && (
           <button
-            onClick={onOpenInstallModal}
+            onClick={handleInstallClick}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-100 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all whitespace-nowrap"
             title="Download app to your Samsung Galaxy S26"
           >
@@ -151,6 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden sm:inline">Install to S26</span>
             <span className="sm:hidden">Install</span>
           </button>
+          )}
 
           {/* Simulate Incoming Button */}
           <button
