@@ -3,15 +3,9 @@ import QRCode from 'qrcode';
 import { 
   X, 
   Smartphone, 
-  Download, 
   Copy, 
   Check, 
-  ShieldCheck, 
-  AlertCircle,
-  ExternalLink,
   QrCode,
-  Sparkles,
-  ArrowRight
 } from 'lucide-react';
 
 interface InstallModalProps {
@@ -20,15 +14,11 @@ interface InstallModalProps {
 }
 
 export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) => {
-  const [copiedPre, setCopiedPre] = useState(false);
-  const [copiedDev, setCopiedDev] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
-  const [selectedUrlType, setSelectedUrlType] = useState<'shared' | 'dev'>('shared');
 
-  const sharedUrl = 'https://ais-pre-ikltjvz7ox672bthx4vtwh-502358859131.us-east1.run.app';
-  const devUrl = 'https://ais-dev-ikltjvz7ox672bthx4vtwh-502358859131.us-east1.run.app';
-
-  const activeUrl = selectedUrlType === 'shared' ? sharedUrl : devUrl;
+  // Permanent public URL (GitHub Pages).
+  const activeUrl = 'https://emiliehood.github.io/Spam-Blocker/';
 
   useEffect(() => {
     QRCode.toDataURL(activeUrl, {
@@ -43,15 +33,10 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
       .catch(err => console.error('Failed to generate QR code:', err));
   }, [activeUrl]);
 
-  const handleCopy = (text: string, isDev: boolean) => {
+  const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    if (isDev) {
-      setCopiedDev(true);
-      setTimeout(() => setCopiedDev(false), 2500);
-    } else {
-      setCopiedPre(true);
-      setTimeout(() => setCopiedPre(false), 2500);
-    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   if (!isOpen) return null;
@@ -68,7 +53,7 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
               Install ShieldS26 to Your Samsung Phone
             </h3>
             <p className="text-xs text-slate-300">
-              Fix the 404 error and install as a standalone app on your Galaxy S26.
+              Open the link below on your phone, then install it as a standalone app.
             </p>
           </div>
           <button
@@ -77,23 +62,6 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* 404 Explanation & Fix Notice */}
-        <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/50 space-y-2">
-          <div className="flex items-center gap-2 text-amber-300 font-bold text-xs sm:text-sm">
-            <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
-            <span>Why did you see "404 Page not found"?</span>
-          </div>
-          <p className="text-xs text-slate-200 leading-relaxed">
-            In Google AI Studio, the public Shared URL only activates <strong>after you click the "Publish" or "Share" button</strong> in the top-right toolbar of the AI Studio window.
-          </p>
-          <div className="bg-slate-950/70 p-2.5 rounded-xl border border-amber-500/30 flex items-center gap-2 text-xs text-amber-200">
-            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>
-              <strong>Action required:</strong> Look at the very top right of your screen in AI Studio &rarr; Click <strong>"Publish"</strong> (or <strong>"Share"</strong>).
-            </span>
-          </div>
         </div>
 
         {/* QR Code Scan Option */}
@@ -125,38 +93,20 @@ export const InstallModal: React.FC<InstallModalProps> = ({ isOpen, onClose }) =
           </div>
         </div>
 
-        {/* URL Links with Copy Buttons */}
-        <div className="space-y-2.5">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-              <span>1. Public App URL (Active once you click Publish):</span>
-              <button
-                onClick={() => handleCopy(sharedUrl, false)}
-                className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-bold"
-              >
-                {copiedPre ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedPre ? 'Copied!' : 'Copy'}</span>
-              </button>
-            </div>
-            <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-cyan-300 select-all truncate">
-              {sharedUrl}
-            </div>
+        {/* App URL with Copy Button */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+            <span>App URL:</span>
+            <button
+              onClick={() => handleCopy(activeUrl)}
+              className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-bold"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? 'Copied!' : 'Copy'}</span>
+            </button>
           </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-              <span>2. Alternate Development URL (If logged into your Google account on phone):</span>
-              <button
-                onClick={() => handleCopy(devUrl, true)}
-                className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-bold"
-              >
-                {copiedDev ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedDev ? 'Copied!' : 'Copy'}</span>
-              </button>
-            </div>
-            <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-400 select-all truncate">
-              {devUrl}
-            </div>
+          <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-cyan-300 select-all truncate">
+            {activeUrl}
           </div>
         </div>
 
